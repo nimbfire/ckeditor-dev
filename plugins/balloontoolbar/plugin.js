@@ -34,6 +34,12 @@
 		 * @private
 		 */
 		this._listeners = [];
+
+		/**
+		 * Reference to {@link CKEDITOR.dom.element} belong to rendered items inside {@link CKEDITOR.ui.balloonToolbar}.
+		 * Array is necessary to clear out those items from {@link CKEDITOR.focusManager}.
+		 */
+		this._focusablesItems = [];
 	};
 
 	/**
@@ -163,6 +169,8 @@
 	CKEDITOR.ui.balloonToolbar.prototype.deleteItem = function( name ) {
 		if ( this._items[ name ] ) {
 			delete this._items[ name ];
+			// Redraw balloon toolbar when item is removed.
+			this._view.renderItems( this._items );
 		}
 	};
 
@@ -664,6 +672,7 @@
 			};
 
 			CKEDITOR.ui.balloonToolbarView.prototype.destroy = function() {
+				deregisterAllFocusableItems.call( this, this._focusablesItems );
 				CKEDITOR.ui.balloonPanel.prototype.destroy.call( this );
 				this._detachListeners();
 			};
@@ -679,6 +688,9 @@
 					keys = CKEDITOR.tools.objectKeys( items ),
 					groupStarted = false;
 
+				// When we rerender toolbar we want to clear focusable in case of removing some items.
+				deregisterAllFocusableItems.call( this, this._focusablesItems );
+
 				CKEDITOR.tools.array.forEach( keys, function( itemKey ) {
 
 					// If next element to render is richCombo and we have already opened group we have to close it.
@@ -690,7 +702,6 @@
 						groupStarted = true;
 						output.push( '<span class="cke_toolgroup">' );
 					}
-
 					// Now we can render element.
 					items[ itemKey ].render( this.editor, output );
 				}, this );
@@ -704,7 +715,9 @@
 				this.parts.content.unselectable();
 				CKEDITOR.tools.array.forEach( this.parts.content.find( 'a' ).toArray(), function( element ) {
 					element.setAttribute( 'draggable', 'false' );
-				} );
+					this.registerFocusable( element );
+					this._focusablesItems.push( element );
+				}, this );
 			};
 
 			/**
@@ -723,6 +736,16 @@
 
 				CKEDITOR.ui.balloonPanel.prototype.attach.call( this, element, options );
 			};
+
+			// We don't want to expose this method as it should be called only in very specific moments:
+			// 1. Rendering view to clear out toolbar from possible deleted items.
+			// 2. Destroying view.
+			function deregisterAllFocusableItems( elements ) {
+				var element;
+				while ( element = elements.pop() ) {
+					CKEDITOR.ui.balloonPanel.prototype.deregisterFocusable.call( this, element );
+				}
+			}
 		}
 	} );
 
