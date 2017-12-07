@@ -217,6 +217,8 @@
 				return img;
 			},
 
+			draggable: false,
+
 			parts: {
 				img: 'img',
 				loader: '.cke_loader'

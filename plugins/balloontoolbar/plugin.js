@@ -648,7 +648,6 @@
 				var alignments = CKEDITOR.ui.balloonPanel.prototype._getAlignments.call( this, elementRect, panelWidth, panelHeight );
 
 				return {
-					'bottom hcenter': alignments[ 'bottom hcenter' ],
 					'top hcenter': alignments[ 'top hcenter' ]
 				};
 			};
